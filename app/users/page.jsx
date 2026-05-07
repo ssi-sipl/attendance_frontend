@@ -1,17 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import { getUsers } from '@/lib/api';
 
-const initialUsers = [
-  { id: 'EMP001', name: 'Rajesh Kumar' },
-  { id: 'EMP002', name: 'Priya Sharma' },
-  { id: 'EMP003', name: 'Amit Verma' },
-  { id: 'EMP004', name: 'Sunita Patel' },
-  { id: 'EMP005', name: 'Rohan Mehta' },
-  { id: 'EMP006', name: 'Kavya Nair' },
-];
+const ITEMS_PER_PAGE = 20;
 
 function getInitials(name) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -19,13 +13,46 @@ function getInitials(name) {
 
 export default function UsersPage() {
   const router = useRouter();
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+  const paginatedUsers = users.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await getUsers();
+      const mapped = res.data.map(u => ({
+        id: u.user_id,
+        name: u.name,
+        status: u.status,
+      }));
+      setUsers(mapped);
+    } catch (err) {
+      setError('Failed to load users. Make sure the backend is running on port 5000.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = (id) => {
     setDeletingId(id);
     setTimeout(() => {
-      setUsers(prev => prev.filter(u => u.id !== id));
+      setUsers(prev => {
+        const updated = prev.filter(u => u.id !== id);
+        const newTotalPages = Math.ceil(updated.length / ITEMS_PER_PAGE);
+        if (currentPage > newTotalPages) setCurrentPage(Math.max(1, newTotalPages));
+        return updated;
+      });
       setDeletingId(null);
     }, 300);
   };
@@ -39,7 +66,7 @@ export default function UsersPage() {
           </button>
           <div className={styles.divider} />
           <span className={styles.navLogo}>📋</span>
-          <span className={styles.navTitle}>AttendEase</span>
+          <span className={styles.navTitle}>NCattendance</span>
         </div>
         <button className={styles.logoutBtn} onClick={() => router.push('/login')}>
           Sign Out
@@ -50,57 +77,98 @@ export default function UsersPage() {
         <div className={styles.pageHeader}>
           <div>
             <h1 className={styles.heading}>Users</h1>
-            <p className={styles.subheading}>{users.length} active users in the system</p>
+            <p className={styles.subheading}>
+              {loading ? 'Loading...' : `${users.length} active users in the system`}
+            </p>
           </div>
-          
+          <button className={styles.refreshBtn} onClick={fetchUsers} title="Refresh">
+            🔄 Refresh
+          </button>
         </div>
 
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>Employee ID</th>
-                <th className={styles.th}>Name</th>
-                <th className={styles.th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className={`${styles.row} ${deletingId === user.id ? styles.deleting : ''}`}
-                >
-                  <td className={styles.td}>
-                    <span className={styles.empId}>{user.id}</span>
-                  </td>
-                  <td className={styles.td}>
-                    <div className={styles.nameCell}>
-                      <div className={styles.avatar}>{getInitials(user.name)}</div>
-                      <span className={styles.name}>{user.name}</span>
-                    </div>
-                  </td>
-                  <td className={styles.td}>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={() => handleDelete(user.id)}
-                      title="Delete user"
+        {error && (
+          <div className={styles.errorBox}>
+            <span>⚠️ {error}</span>
+            <button onClick={fetchUsers} className={styles.retryBtn}>Retry</button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className={styles.tableWrapper}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className={styles.skeletonRow} />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Employee ID</th>
+                    <th className={styles.th}>Name</th>
+                    <th className={styles.th}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedUsers.map((user) => (
+                    <tr
+                      key={user.id}
+                      className={`${styles.row} ${deletingId === user.id ? styles.deleting : ''}`}
                     >
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <td className={styles.td}>
+                        <span className={styles.empId}>{user.id}</span>
+                      </td>
+                      <td className={styles.td}>
+                        <div className={styles.nameCell}>
+                          <div className={styles.avatar}>{getInitials(user.name)}</div>
+                          <span className={styles.name}>{user.name}</span>
+                        </div>
+                      </td>
+                      <td className={styles.td}>
+                        <button
+                          className={styles.deleteBtn}
+                          onClick={() => handleDelete(user.id)}
+                          title="Delete user"
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-          {users.length === 0 && (
-            <div className={styles.empty}>
-              <span className={styles.emptyIcon}>👥</span>
-              <p className={styles.emptyText}>No users found</p>
-              <p className={styles.emptySubtext}>Add a new user to get started</p>
+              {users.length === 0 && !loading && (
+                <div className={styles.empty}>
+                  <span className={styles.emptyIcon}>👥</span>
+                  <p className={styles.emptyText}>No users found</p>
+                  <p className={styles.emptySubtext}>Add a new user to get started</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+
+            {totalPages > 1 && (
+              <div className={styles.pagination}>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  ← Previous
+                </button>
+                <span className={styles.pageInfo}>Page {currentPage} of {totalPages}</span>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </main>
     </div>
   );

@@ -1,36 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
-
-const users = [
-  { id: 'EMP001', name: 'Rajesh Kumar' },
-  { id: 'EMP002', name: 'Priya Sharma' },
-  { id: 'EMP003', name: 'Amit Verma' },
-  { id: 'EMP004', name: 'Sunita Patel' },
-  { id: 'EMP005', name: 'Rohan Mehta' },
-  { id: 'EMP006', name: 'Kavya Nair' },
-];
+import { getAttendance } from '@/lib/api';
+import useSocket from '@/lib/useSocket';
 
 const today = new Date().toISOString().split('T')[0];
 const ITEMS_PER_PAGE = 20;
-
-function generateRecords() {
-  const records = [];
-  const statuses = ['Present', 'Present', 'Present', 'Absent', 'Present'];
-  for (let d = 0; d < 30; d++) {
-    const date = new Date();
-    date.setDate(date.getDate() - d);
-    const dateStr = date.toISOString().split('T')[0];
-    users.forEach((user, i) => {
-      records.push({ empId: user.id, name: user.name, date: dateStr, status: statuses[(i + d) % statuses.length] });
-    });
-  }
-  return records;
-}
-
-const allRecords = generateRecords();
 
 function getInitials(name) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -50,31 +27,59 @@ export default function AttendancePage() {
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [empViewInput, setEmpViewInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [allRecords, setAllRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchAttendance = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await getAttendance();
+      const mapped = res.data.map(r => ({
+        empId: r.user_id,
+        name: r.name,
+        date: r.date,
+        time: r.time,
+        status: 'Present',
+      }));
+      setAllRecords(mapped);
+    } catch (err) {
+      setError('Failed to load attendance. Make sure the backend is running on port 5000.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchAttendance(); }, []);
+  useSocket(fetchAttendance);
+
+  const users = [...new Map(allRecords.map(r => [r.empId, { id: r.empId, name: r.name }])).values()];
 
   const dailyRecords = allRecords.filter(r => {
     const dateMatch = r.date === selectedDate;
-    const empMatch = empIdFilter.trim() === '' || r.empId.toLowerCase().includes(empIdFilter.toLowerCase());
+    const empMatch = empIdFilter.trim() === '' || String(r.empId).toLowerCase().includes(empIdFilter.toLowerCase());
     return dateMatch && empMatch;
   });
   const totalDailyPages = Math.ceil(dailyRecords.length / ITEMS_PER_PAGE);
   const paginatedDailyRecords = dailyRecords.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const employeeRecords = selectedEmployee && selectedEmployee !== 'NOT_FOUND'
-    ? allRecords.filter(r => r.empId === selectedEmployee).sort((a, b) => new Date(b.date) - new Date(a.date))
+    ? allRecords.filter(r => String(r.empId) === String(selectedEmployee)).sort((a, b) => new Date(b.date) - new Date(a.date))
     : [];
   const totalEmpPages = Math.ceil(employeeRecords.length / ITEMS_PER_PAGE);
   const paginatedEmpRecords = employeeRecords.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const presentCount = dailyRecords.filter(r => r.status === 'Present').length;
-  const absentCount = dailyRecords.filter(r => r.status === 'Absent').length;
-  const empPresentCount = employeeRecords.filter(r => r.status === 'Present').length;
-  const empAbsentCount = employeeRecords.filter(r => r.status === 'Absent').length;
+  const presentCount = dailyRecords.length;
+  const totalUsers = users.length;
+  const absentCount = Math.max(0, totalUsers - presentCount);
 
+  const empPresentCount = employeeRecords.length;
   const totalPages = activeTab === 'daily' ? totalDailyPages : totalEmpPages;
 
   const handleEmployeeSearch = () => {
     const found = users.find(u =>
-      u.id.toLowerCase() === empViewInput.toLowerCase() ||
+      String(u.id).toLowerCase() === empViewInput.toLowerCase() ||
       u.name.toLowerCase().includes(empViewInput.toLowerCase())
     );
     setSelectedEmployee(found ? found.id : 'NOT_FOUND');
@@ -88,16 +93,28 @@ export default function AttendancePage() {
           <button className={styles.backBtn} onClick={() => router.push('/dashboard')}>← Back</button>
           <div className={styles.divider} />
           <span className={styles.navLogo}>📋</span>
-          <span className={styles.navTitle}>AttendEase</span>
+          <span className={styles.navTitle}>NCattendance</span>
         </div>
-        <button className={styles.logoutBtn} onClick={() => router.push('/login')}>Sign Out</button>
+        <div className={styles.navRight}>
+          <button className={styles.refreshBtn} onClick={fetchAttendance} title="Refresh">🔄</button>
+          <button className={styles.logoutBtn} onClick={() => router.push('/login')}>Sign Out</button>
+        </div>
       </header>
 
       <main className={styles.main}>
         <div className={styles.pageHeader}>
           <h1 className={styles.heading}>Attendance</h1>
-          <p className={styles.subheading}>View and filter attendance records</p>
+          <p className={styles.subheading}>
+            {loading ? 'Loading records...' : `${allRecords.length} total records`}
+          </p>
         </div>
+
+        {error && (
+          <div className={styles.errorBox}>
+            <span>⚠️ {error}</span>
+            <button onClick={fetchAttendance} className={styles.retryBtn}>Retry</button>
+          </div>
+        )}
 
         <div className={styles.toggleRow}>
           <button className={`${styles.toggleBtn} ${activeTab === 'daily' ? styles.active : ''}`}
@@ -122,7 +139,7 @@ export default function AttendancePage() {
               </div>
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Employee ID <span className={styles.optional}>(optional)</span></label>
-                <input type="text" placeholder="e.g. EMP001" value={empIdFilter}
+                <input type="text" placeholder="e.g. 1" value={empIdFilter}
                   onChange={(e) => { setEmpIdFilter(e.target.value); setCurrentPage(1); }}
                   className={styles.dateInput} />
               </div>
@@ -144,12 +161,17 @@ export default function AttendancePage() {
                   <tr>
                     <th className={styles.th}>Employee ID</th>
                     <th className={styles.th}>Name</th>
+                    <th className={styles.th}>Time</th>
                     <th className={styles.th}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedDailyRecords.length > 0 ? paginatedDailyRecords.map((record) => (
-                    <tr key={record.empId} className={styles.row}>
+                  {loading ? (
+                    [...Array(5)].map((_, i) => (
+                      <tr key={i}><td colSpan={4} className={styles.td}><div className={styles.skeletonRow} /></td></tr>
+                    ))
+                  ) : paginatedDailyRecords.length > 0 ? paginatedDailyRecords.map((record, i) => (
+                    <tr key={`${record.empId}-${i}`} className={styles.row}>
                       <td className={styles.td}><span className={styles.empId}>{record.empId}</span></td>
                       <td className={styles.td}>
                         <div className={styles.nameCell}>
@@ -157,14 +179,13 @@ export default function AttendancePage() {
                           <span className={styles.name}>{record.name}</span>
                         </div>
                       </td>
+                      <td className={styles.td}><span className={styles.dateText}>{record.time || '—'}</span></td>
                       <td className={styles.td}>
-                        <span className={`${styles.badge} ${record.status === 'Present' ? styles.present : styles.absent}`}>
-                          {record.status === 'Present' ? '✓ Present' : '✗ Absent'}
-                        </span>
+                        <span className={`${styles.badge} ${styles.present}`}>✓ Present</span>
                       </td>
                     </tr>
                   )) : (
-                    <tr><td colSpan={3} className={styles.emptyRow}>No records found</td></tr>
+                    <tr><td colSpan={4} className={styles.emptyRow}>No records found for this date</td></tr>
                   )}
                 </tbody>
               </table>
@@ -187,7 +208,7 @@ export default function AttendancePage() {
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Search by Name or Employee ID</label>
                 <div className={styles.searchRow}>
-                  <input type="text" placeholder="e.g. Rajesh or EMP001" value={empViewInput}
+                  <input type="text" placeholder="e.g. Rikky or 1" value={empViewInput}
                     onChange={(e) => setEmpViewInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleEmployeeSearch()}
                     className={styles.searchInput} />
@@ -199,10 +220,6 @@ export default function AttendancePage() {
                   <div className={styles.statBox} style={{ background: '#ecfdf5', color: '#059669' }}>
                     <span className={styles.statNum}>{empPresentCount}</span>
                     <span className={styles.statLabel}>Present</span>
-                  </div>
-                  <div className={styles.statBox} style={{ background: '#fef2f2', color: '#dc2626' }}>
-                    <span className={styles.statNum}>{empAbsentCount}</span>
-                    <span className={styles.statLabel}>Absent</span>
                   </div>
                 </div>
               )}
@@ -218,10 +235,10 @@ export default function AttendancePage() {
             {selectedEmployee && selectedEmployee !== 'NOT_FOUND' && (
               <>
                 <div className={styles.employeeTag}>
-                  <div className={styles.avatar}>{getInitials(users.find(u => u.id === selectedEmployee)?.name || '')}</div>
+                  <div className={styles.avatar}>{getInitials(users.find(u => String(u.id) === String(selectedEmployee))?.name || '')}</div>
                   <div>
-                    <p className={styles.empTagName}>{users.find(u => u.id === selectedEmployee)?.name}</p>
-                    <p className={styles.empTagId}>{selectedEmployee} · All-time records ({employeeRecords.length} days)</p>
+                    <p className={styles.empTagName}>{users.find(u => String(u.id) === String(selectedEmployee))?.name}</p>
+                    <p className={styles.empTagId}>ID: {selectedEmployee} · All-time records ({employeeRecords.length} days)</p>
                   </div>
                 </div>
 
@@ -230,17 +247,17 @@ export default function AttendancePage() {
                     <thead>
                       <tr>
                         <th className={styles.th}>Date</th>
+                        <th className={styles.th}>Time</th>
                         <th className={styles.th}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedEmpRecords.map((record) => (
-                        <tr key={record.date} className={styles.row}>
+                      {paginatedEmpRecords.map((record, i) => (
+                        <tr key={i} className={styles.row}>
                           <td className={styles.td}><span className={styles.dateText}>{formatDate(record.date)}</span></td>
+                          <td className={styles.td}><span className={styles.dateText}>{record.time || '—'}</span></td>
                           <td className={styles.td}>
-                            <span className={`${styles.badge} ${record.status === 'Present' ? styles.present : styles.absent}`}>
-                              {record.status === 'Present' ? '✓ Present' : '✗ Absent'}
-                            </span>
+                            <span className={`${styles.badge} ${styles.present}`}>✓ Present</span>
                           </td>
                         </tr>
                       ))}
