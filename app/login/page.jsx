@@ -45,7 +45,7 @@ export default function LoginPage() {
         <div className={styles.topBar}>
           <div className={styles.logoRow}>
             <span className={styles.logoIcon}>📋</span>
-            <span className={styles.logoText}>AttendEase</span>
+            <span className={styles.logoText}>NCattendance</span>
           </div>
           <div className={styles.clock}>
             <span className={styles.clockTime}>{time}</span>
@@ -55,7 +55,7 @@ export default function LoginPage() {
 
         <div className={styles.card}>
           <h1 className={styles.title}>Welcome back</h1>
-          <p className={styles.subtitle}>Sign in to your account to continue</p>
+          <p className={styles.subtitle}>Log in to your account to continue</p>
 
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.field}>
@@ -94,12 +94,12 @@ export default function LoginPage() {
             {error && <p className={styles.error}>{error}</p>}
 
             <button type="submit" className={styles.submitBtn}>
-              Sign In
+              Log In
             </button>
           </form>
         </div>
 
-        <p className={styles.footer}>AttendEase · Attendance Management System</p>
+        <p className={styles.footer}>NCattendance · Attendance Management System</p>
       </div>
     </div>
   );

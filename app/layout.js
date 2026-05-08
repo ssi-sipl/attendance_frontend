@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "AttendEase",
-  description: "Smart Attendance Management",
+  title: "NCattendance",
+  description: " Attendance Management System",
 };
 
 export default function RootLayout({ children }) {

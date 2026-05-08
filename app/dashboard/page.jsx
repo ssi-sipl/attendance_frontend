@@ -8,7 +8,7 @@ const tiles = [
     id: 'attendance',
     icon: '✅',
     title: 'Attendance',
-    description: 'Mark and track daily student attendance records',
+    description: 'Track daily Employee attendance',
     color: '#4f46e5',
     highlight: '#eef2ff',
   },
@@ -16,7 +16,7 @@ const tiles = [
     id: 'users',
     icon: '👤',
     title: 'Users',
-    description: 'Manage teachers, admins and system user accounts',
+    description: 'Manage Employees',
     color: '#0891b2',
     highlight: '#ecfeff',
   },
@@ -24,7 +24,7 @@ const tiles = [
     id: 'enrollment',
     icon: '📋',
     title: 'Enrollment',
-    description: 'Enroll students into classes and manage rosters',
+    description: 'Register new Employees into the system',
     color: '#059669',
     highlight: '#ecfdf5',
   },
@@ -38,7 +38,7 @@ export default function DashboardPage() {
       <header className={styles.navbar}>
         <div className={styles.navLeft}>
           <span className={styles.navLogo}>📋</span>
-          <span className={styles.navTitle}>AttendEase</span>
+          <span className={styles.navTitle}>NCattendance</span>
         </div>
         <button className={styles.logoutBtn} onClick={() => router.push('/login')}>
           Sign Out

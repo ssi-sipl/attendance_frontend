@@ -28,17 +28,21 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
+      console.log("Fetch Users called");
       setLoading(true);
       setError(null);
       const res = await getUsers();
-      const mapped = res.data.map(u => ({
+      console.log("response: ", res);
+      const mapped = res.data.data.map(u => ({
         id: u.user_id,
         name: u.name,
         status: u.status,
       }));
+      console.log(mapped);
       setUsers(mapped);
     } catch (err) {
       setError('Failed to load users. Make sure the backend is running on port 5000.');
+      console.log("Error at page/users/fetchUsers: ", err);
     } finally {
       setLoading(false);
     }
@@ -78,7 +82,7 @@ export default function UsersPage() {
           <div>
             <h1 className={styles.heading}>Users</h1>
             <p className={styles.subheading}>
-              {loading ? 'Loading...' : `${users.length} active users in the system`}
+              {loading ? 'Loading...' : `${users.length} active employees in the system`}
             </p>
           </div>
           <button className={styles.refreshBtn} onClick={fetchUsers} title="Refresh">

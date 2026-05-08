@@ -36,7 +36,7 @@ export default function EnrollmentPage() {
           </button>
           <div className={styles.divider} />
           <span className={styles.navLogo}>📋</span>
-          <span className={styles.navTitle}>AttendEase</span>
+          <span className={styles.navTitle}>NCattendance</span>
         </div>
         <button className={styles.logoutBtn} onClick={() => router.push('/login')}>
           Sign Out
