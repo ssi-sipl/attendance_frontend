@@ -33,7 +33,18 @@ export default function UsersPage() {
       setError(null);
       const res = await getUsers();
       console.log("response: ", res);
-      const mapped = res.data.data.map(u => ({
+
+      console.log("Response data: ", res.data.status);
+      if (!res.data?.status) {
+        alert(res.data.message || 'Failed to fetch users');
+        return;
+      }
+      if(!res.data.data.users||res  .data.data.users.length === 0) {
+        setUsers([]);
+        return;
+      }
+      
+      const mapped = res.data.data.users.map(u => ({
         id: u.user_id,
         name: u.name,
         status: u.status,

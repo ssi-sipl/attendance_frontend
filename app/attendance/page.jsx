@@ -64,7 +64,12 @@ export default function AttendancePage() {
       setLoading(true);
       setError(null);
       const res = await getAttendance(debouncedEmpId, selectedDate);
-      const mapped = res.data.data.map(r => ({
+      console.log("Response:", res.data);
+        if (!res.data.status) {
+          setError(res.data.message);
+          return(message);
+          }
+const mapped = res.data.data.records.map(r => ({
         empId: r.user_id,
         name: r.name,
         date: r.date,
@@ -92,13 +97,18 @@ export default function AttendancePage() {
       setEmpLoading(true);
       setEmpError(null);
       const res = await getAttendance(userId, '');
-      if (!res.data.data.length) {
+      if (!res.data.status) {
+  setEmpError(res.data.message);
+  return;
+}
+
+      if (!res.data.data.records.length) {
         setSelectedEmployee('NOT_FOUND');
         setSelectedEmployeeName('');
         setEmpRecords([]);
         return;
       }
-      const mapped = res.data.data.map(r => ({
+      const mapped = res.data.data.records.map(r => ({
         empId: r.user_id,
         name: r.name,
         date: r.date,
