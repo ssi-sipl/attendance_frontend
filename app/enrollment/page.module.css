@@ -5,243 +5,43 @@
     radial-gradient(ellipse at 0% 0%, rgba(99,102,241,0.06) 0%, transparent 50%),
     radial-gradient(ellipse at 100% 100%, rgba(14,165,233,0.05) 0%, transparent 50%);
 }
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  height: 60px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.navLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.backBtn {
-  padding: 7px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.backBtn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-.divider {
-  width: 1px;
-  height: 20px;
-  background: #e2e8f0;
-}
+.navbar { display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 60px; background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+.navLeft { display: flex; align-items: center; gap: 12px; }
+.backBtn { padding: 7px 14px; font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; }
+.backBtn:hover { background: #e2e8f0; color: #0f172a; }
+.divider { width: 1px; height: 20px; background: #e2e8f0; }
 .navLogo { font-size: 20px; }
-.navTitle {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-}
-.logoutBtn {
-  padding: 8px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.logoutBtn:hover {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-.main {
-  max-width: 520px;
-  margin: 0 auto;
-  padding: 60px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-.pageHeader { }
-.heading {
-  font-size: 28px;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.5px;
-  margin: 0 0 6px;
-}
-.subheading {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
-}
-.card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 36px;
-  box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06);
-}
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
-.input {
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 14.5px;
-  color: #0f172a;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  outline: none;
-  transition: all 0.15s ease;
-}
+.navTitle { font-size: 16px; font-weight: 700; color: #0f172a; }
+.logoutBtn { padding: 8px 18px; font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; }
+.logoutBtn:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+.main { max-width: 520px; margin: 0 auto; padding: 60px 24px; display: flex; flex-direction: column; gap: 28px; }
+.heading { font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin: 0 0 6px; }
+.subheading { font-size: 14px; color: #64748b; margin: 0; }
+.card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 36px; box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06); }
+.form { display: flex; flex-direction: column; gap: 20px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.label { font-size: 13px; font-weight: 600; color: #374151; }
+.input { width: 100%; padding: 12px 16px; font-size: 14.5px; color: #0f172a; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; transition: all 0.15s ease; }
 .input::placeholder { color: #b0bec5; }
-.input:focus {
-  border-color: #6366f1;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-}
-.scanBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 14px;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #4f46e5;
-  background: #eef2ff;
-  border: 2px dashed #a5b4fc;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.scanBtn:hover {
-  background: #e0e7ff;
-  border-color: #6366f1;
-}
-.scanBtnIcon { font-size: 20px; }
-.submitBtn {
-  width: 100%;
-  padding: 13px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-  background: #4f46e5;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  margin-top: 4px;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
-}
-.submitBtn:hover {
-  background: #4338ca;
-  box-shadow: 0 8px 24px rgba(79,70,229,0.3);
-}
-
-/* ── MODAL ── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15,23,42,0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.modal {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 40px 36px;
-  width: 100%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
-  animation: slideUp 0.25s ease;
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.modalTitle {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  text-align: center;
-  margin: 0;
-}
-.fingerprintBox {
-  width: 120px;
-  height: 120px;
-  border-radius: 24px;
-  background: #eef2ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  color: #6366f1;
-  transition: background 0.4s ease, color 0.4s ease;
-}
-.fingerprintBox.success {
-  background: #ecfdf5;
-  color: #059669;
-}
-.fingerprintSvg {
-  width: 72px;
-  height: 72px;
-  transition: opacity 0.3s ease;
-}
-.fingerprintSvg.scanning {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.95); }
-}
-.scanLine {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #6366f1, transparent);
-  animation: scanMove 1.5s ease-in-out infinite;
-}
-@keyframes scanMove {
-  0% {
-
-ls app/enrollment/
-
+.input:focus { border-color: #6366f1; background: #ffffff; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+.scanHint { display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 16px; font-size: 13.5px; font-weight: 500; color: #4f46e5; background: #eef2ff; border: 2px dashed #a5b4fc; border-radius: 12px; }
+.scanHint strong { font-weight: 700; }
+.submitBtn { width: 100%; padding: 13px; font-size: 15px; font-weight: 700; color: #ffffff; background: #4f46e5; border: none; border-radius: 10px; cursor: pointer; margin-top: 4px; transition: background 0.15s ease, box-shadow 0.15s ease; }
+.submitBtn:hover { background: #4338ca; box-shadow: 0 8px 24px rgba(79,70,229,0.3); }
+.overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: #ffffff; border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; gap: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.2); animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modalTitle { font-size: 15px; font-weight: 700; color: #0f172a; text-align: center; margin: 0; }
+.fingerprintBox { width: 120px; height: 120px; border-radius: 24px; background: #eef2ff; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; color: #6366f1; transition: background 0.4s ease, color 0.4s ease; }
+.fingerprintBox.success { background: #ecfdf5; color: #059669; }
+.fingerprintSvg { width: 72px; height: 72px; transition: opacity 0.3s ease; }
+.fingerprintSvg.scanning { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
+.scanLine { position: absolute; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #6366f1, transparent); animation: scanMove 1.5s ease-in-out infinite; }
+@keyframes scanMove { 0% { top: 0; } 50% { top: calc(100% - 3px); } 100% { top: 0; } }
+.checkmark { position: absolute; font-size: 36px; font-weight: 700; color: #059669; animation: popIn 0.3s ease; }
+@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modalSub { font-size: 13px; color: #64748b; margin: 0; }
+.cancelBtn { padding: 10px 28px; font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; }
+.cancelBtn:hover:not(:disabled) { background: #fee2e2; color: #dc2626; border-color: #fecaca; }

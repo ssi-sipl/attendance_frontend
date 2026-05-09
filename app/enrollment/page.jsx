@@ -6,25 +6,59 @@ import styles from './page.module.css';
 
 export default function EnrollmentPage() {
   const router = useRouter();
-  const [empId, setEmpId] = useState('');
   const [name, setName] = useState('');
   const [scanning, setScanning] = useState(false);
-  const [scanStatus, setScanStatus] = useState('idle'); // idle | scanning | success
-
-  const handleScan = () => {
-    setScanning(true);
-    setScanStatus('scanning');
-    setTimeout(() => {
-      setScanStatus('success');
-      setTimeout(() => {
-        setScanning(false);
-        setScanStatus('idle');
-      }, 2000);
-    }, 3000);
-  };
+  const [scanStatus, setScanStatus] = useState('idle');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!name.trim()) {
+      alert('Please enter the employee name');
+      return;
+    }
+    setScanning(true);
+    setScanStatus('scanning');
+
+    setTimeout(async () => {
+      setScanStatus('success');
+      try {
+        setSubmitting(true);
+        const res = await fetch('http://localhost:5000/api/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim() }),
+        });
+        const data = await res.json();
+
+        if (data.status) {
+          setTimeout(() => {
+            setScanning(false);
+            setScanStatus('idle');
+            setSubmitting(false);
+            alert(`Enrolled successfully!\nAssigned Employee ID: ${data.data.user_id}`);
+            setName('');
+            router.push('/dashboard');
+          }, 1500);
+        } else {
+          setScanning(false);
+          setScanStatus('idle');
+          setSubmitting(false);
+          alert(`Error: ${data.message}`);
+        }
+      } catch (err) {
+        setScanning(false);
+        setScanStatus('idle');
+        setSubmitting(false);
+        alert('Failed to connect to server. Make sure the backend is running on port 5000.');
+      }
+    }, 3000);
+  };
+
+  const handleCloseModal = () => {
+    if (submitting) return;
+    setScanning(false);
+    setScanStatus('idle');
   };
 
   return (
@@ -52,18 +86,6 @@ export default function EnrollmentPage() {
         <div className={styles.card}>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="empId">Employee ID</label>
-              <input
-                id="empId"
-                type="text"
-                placeholder="e.g. EMP007"
-                value={empId}
-                onChange={(e) => setEmpId(e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.field}>
               <label className={styles.label} htmlFor="name">Full Name</label>
               <input
                 id="name"
@@ -75,18 +97,6 @@ export default function EnrollmentPage() {
               />
             </div>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Fingerprint</label>
-              <button
-                type="button"
-                className={styles.scanBtn}
-                onClick={handleScan}
-              >
-                <span className={styles.scanBtnIcon}>👆</span>
-                Scan Fingerprint
-              </button>
-            </div>
-
             <button type="submit" className={styles.submitBtn}>
               Enroll Employee
             </button>
@@ -94,14 +104,12 @@ export default function EnrollmentPage() {
         </div>
       </main>
 
-      {/* Fingerprint Modal */}
       {scanning && (
-        <div className={styles.overlay} onClick={() => { setScanning(false); setScanStatus('idle'); }}>
+        <div className={styles.overlay} onClick={handleCloseModal}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.modalTitle}>
               {scanStatus === 'scanning' ? 'Place your finger on the scanner' : 'Fingerprint captured!'}
             </p>
-
             <div className={`${styles.fingerprintBox} ${scanStatus === 'success' ? styles.success : ''}`}>
               <svg className={`${styles.fingerprintSvg} ${scanStatus === 'scanning' ? styles.scanning : ''}`} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
@@ -113,25 +121,19 @@ export default function EnrollmentPage() {
                 <path d="M50 25 C58 25 65 29 69 35" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                 <path d="M50 35 C56 35 62 38 65 44" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
               </svg>
-
-              {scanStatus === 'scanning' && (
-                <div className={styles.scanLine} />
-              )}
-
-              {scanStatus === 'success' && (
-                <div className={styles.checkmark}>✓</div>
-              )}
+              {scanStatus === 'scanning' && <div className={styles.scanLine} />}
+              {scanStatus === 'success' && <div className={styles.checkmark}>✓</div>}
             </div>
-
             <p className={styles.modalSub}>
-              {scanStatus === 'scanning' ? 'Scanning...' : 'Scan complete'}
+              {scanStatus === 'scanning' ? 'Scanning...' : 'Enrolling, please wait...'}
             </p>
-
             <button
               className={styles.cancelBtn}
-              onClick={() => { setScanning(false); setScanStatus('idle'); }}
+              onClick={handleCloseModal}
+              disabled={submitting}
+              style={{ opacity: submitting ? 0.5 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}
             >
-              {scanStatus === 'success' ? 'Done' : 'Cancel'}
+              {scanStatus === 'success' ? 'Please wait...' : 'Cancel'}
             </button>
           </div>
         </div>
