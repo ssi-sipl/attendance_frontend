@@ -153,7 +153,7 @@ const mapped = res.data.data.records.map(r => ({
         </div>
         <div className={styles.navRight}>
           <button className={styles.refreshBtn} onClick={fetchAttendance} title="Refresh">🔄</button>
-          <button className={styles.logoutBtn} onClick={() => router.push('/login')}>Sign Out</button>
+          <button className={styles.logoutBtn} onClick={() => router.push('/')}>Sign Out</button>
         </div>
       </header>
 
