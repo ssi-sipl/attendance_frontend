@@ -8,18 +8,21 @@ export const apiCall = async (method, endpoint, body = {}) => {
   try {
     const res = await axios[method](`${API_BASE}${endpoint}`, body);
     const { status, message, data } = res.data;
-
-    if (isSuccess(status)) {
-      return { success: true, message, data };
-    } else {
-      return { success: false, message: message || 'Something went wrong.' };
-    }
-
+    if (isSuccess(status)) return { success: true, message, data };
+    return { success: false, message: message || 'Something went wrong.' };
   } catch (err) {
-    const message =
-      err?.response?.data?.message ||
-      err?.response?.data?.error ||
-      'Failed to connect to server.';
-    return { success: false, message };
+    return {
+      success: false,
+      message:
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        'Failed to connect to server.',
+    };
   }
 };
+
+export const getUsers = (page = 1, limit = 20, search = '') =>
+  apiCall('get', `/api/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+
+export const getAttendance = (userId = '', date = '', page = 1, limit = 20) =>
+  apiCall('get', `/api/attendance?user_id=${userId}&date=${date}&page=${page}&limit=${limit}`);

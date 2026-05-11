@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
-import { getAttendance } from '@/lib/api';
+import { getAttendance } from '@/app/utils/api';
 import useSocket from '@/lib/useSocket';
 
 const today = new Date().toLocaleDateString('en-CA');
@@ -44,102 +44,95 @@ function SkeletonRows({ cols = 3, count = 8 }) {
 export default function AttendancePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('daily');
+
   const [selectedDate, setSelectedDate] = useState(today);
   const [empIdFilterInput, setEmpIdFilterInput] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allRecords, setAllRecords] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [selectedEmployeeName, setSelectedEmployeeName] = useState('');
   const [empViewInput, setEmpViewInput] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [allRecords, setAllRecords] = useState([]);
   const [empRecords, setEmpRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [empPage, setEmpPage] = useState(1);
+  const [empTotalPages, setEmpTotalPages] = useState(1);
+  const [empTotalRecords, setEmpTotalRecords] = useState(0);
   const [empLoading, setEmpLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [empError, setEmpError] = useState(null);
 
   const debouncedEmpId = useDebounce(empIdFilterInput, 400);
 
-  const fetchAttendance = useCallback(async () => {
+  const fetchAttendance = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getAttendance(debouncedEmpId, selectedDate);
-      console.log("Response:", res.data);
-        if (!res.data.status) {
-          setError(res.data.message);
-          return(message);
-          }
-const mapped = res.data.data.records.map(r => ({
-        empId: r.user_id,
-        name: r.name,
-        date: r.date,
-        time: r.time,
-        status: 'Present',
-      }));
-      setAllRecords(mapped);
+      const res = await getAttendance(debouncedEmpId, selectedDate, page, ITEMS_PER_PAGE);
+      if (!res.success) {
+        setError(res.message || 'Failed to fetch attendance');
+        return;
+      }
+      const { records, total_pages, total } = res.data;
+      setAllRecords(
+        (records || []).map(r => ({
+          empId: r.user_id,
+          name: r.name,
+          date: r.date,
+          time: r.time,
+        }))
+      );
+      setTotalPages(total_pages || 1);
+      setTotalRecords(total || 0);
+      setCurrentPage(page);
     } catch (err) {
-      console.error('Attendance error:', err);
       setError('Failed to load attendance. Make sure the backend is running on port 5000.');
     } finally {
       setLoading(false);
     }
   }, [selectedDate, debouncedEmpId]);
 
-  useEffect(() => {
-    fetchAttendance();
-    setCurrentPage(1);
-  }, [fetchAttendance]);
+  useEffect(() => { fetchAttendance(1); }, [fetchAttendance]);
+  useSocket(() => fetchAttendance(currentPage));
 
-  useSocket(fetchAttendance);
-
-  const fetchEmployeeRecords = useCallback(async (userId) => {
+  const fetchEmployeeRecords = useCallback(async (userId, page = 1) => {
+    if (!userId) return;
     try {
       setEmpLoading(true);
       setEmpError(null);
-      const res = await getAttendance(userId, '');
-      if (!res.data.status) {
-  setEmpError(res.data.message);
-  return;
-}
-
-      if (!res.data.data.records.length) {
+      const res = await getAttendance(userId, '', page, ITEMS_PER_PAGE);
+      if (!res.success) {
+        setEmpError(res.message || 'Failed to fetch records');
+        return;
+      }
+      const { records, total_pages, total } = res.data;
+      if (!records.length && page === 1) {
         setSelectedEmployee('NOT_FOUND');
         setSelectedEmployeeName('');
         setEmpRecords([]);
         return;
       }
-      const mapped = res.data.data.records.map(r => ({
-        empId: r.user_id,
-        name: r.name,
-        date: r.date,
-        time: r.time,
-        status: 'Present',
-      })).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const mapped = (records || []).map(r => ({
+        empId: r.user_id, name: r.name, date: r.date, time: r.time,
+      }));
       setEmpRecords(mapped);
+      setEmpTotalPages(total_pages || 1);
+      setEmpTotalRecords(total || 0);
+      setEmpPage(page);
       setSelectedEmployee(userId);
-      setSelectedEmployeeName(mapped[0].name);
-      setCurrentPage(1);
+      if (page === 1) setSelectedEmployeeName(mapped[0]?.name || '');
     } catch (err) {
-      console.error('Employee fetch error:', err);
       setEmpError('Failed to load records for this employee.');
     } finally {
       setEmpLoading(false);
     }
   }, []);
 
-  const users = [...new Map(allRecords.map(r => [r.empId, { id: r.empId, name: r.name }])).values()];
-  const dailyRecords = allRecords.filter(r => r.date === selectedDate);
-  const totalDailyPages = Math.ceil(dailyRecords.length / ITEMS_PER_PAGE);
-  const paginatedDailyRecords = dailyRecords.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const totalEmpPages = Math.ceil(empRecords.length / ITEMS_PER_PAGE);
-  const paginatedEmpRecords = empRecords.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const presentCount = dailyRecords.length;
-  const totalUsers = users.length;
-  const absentCount = Math.max(0, totalUsers - presentCount);
-
   const handleEmployeeSearch = () => {
     if (!empViewInput.trim()) return;
-    fetchEmployeeRecords(empViewInput.trim());
+    fetchEmployeeRecords(empViewInput.trim(), 1);
   };
 
   return (
@@ -152,7 +145,7 @@ const mapped = res.data.data.records.map(r => ({
           <span className={styles.navTitle}>NCattendance</span>
         </div>
         <div className={styles.navRight}>
-          <button className={styles.refreshBtn} onClick={fetchAttendance} title="Refresh">🔄</button>
+          <button className={styles.refreshBtn} onClick={() => fetchAttendance(1)} title="Refresh">🔄</button>
           <button className={styles.logoutBtn} onClick={() => router.push('/')}>Sign Out</button>
         </div>
       </header>
@@ -161,25 +154,25 @@ const mapped = res.data.data.records.map(r => ({
         <div>
           <h1 className={styles.heading}>Attendance</h1>
           <p className={styles.subheading}>
-            {loading ? 'Loading records...' : `${allRecords.length} total records`}
+            {loading ? 'Loading records...' : `${totalRecords} total records`}
           </p>
         </div>
 
         {error && (
           <div className={styles.errorBox}>
             <span>⚠️ {error}</span>
-            <button onClick={fetchAttendance} className={styles.retryBtn}>Retry</button>
+            <button onClick={() => fetchAttendance(1)} className={styles.retryBtn}>Retry</button>
           </div>
         )}
 
         <div className={styles.toggleRow}>
           <button
             className={`${styles.toggleBtn} ${activeTab === 'daily' ? styles.active : ''}`}
-            onClick={() => { setActiveTab('daily'); setCurrentPage(1); }}
+            onClick={() => { setActiveTab('daily'); fetchAttendance(1); }}
           >Daily View</button>
           <button
             className={`${styles.toggleBtn} ${activeTab === 'employee' ? styles.active : ''}`}
-            onClick={() => { setActiveTab('employee'); setCurrentPage(1); }}
+            onClick={() => { setActiveTab('employee'); setEmpPage(1); }}
           >Filter by Employee</button>
         </div>
 
@@ -192,7 +185,7 @@ const mapped = res.data.data.records.map(r => ({
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={e => { setSelectedDate(e.target.value); setCurrentPage(1); }}
+                  onChange={e => setSelectedDate(e.target.value)}
                   className={styles.dateInput}
                 />
               </div>
@@ -200,7 +193,7 @@ const mapped = res.data.data.records.map(r => ({
                 <label className={styles.filterLabel}>Employee ID <span className={styles.optional}>(optional)</span></label>
                 <input
                   type="text"
-                  placeholder="e.g. EMP001"
+                  placeholder="e.g. 3"
                   value={empIdFilterInput}
                   onChange={e => setEmpIdFilterInput(e.target.value)}
                   className={styles.searchInput}
@@ -208,12 +201,8 @@ const mapped = res.data.data.records.map(r => ({
               </div>
               <div className={styles.statsRow}>
                 <div className={styles.statBox} style={{ background: '#ecfdf5', color: '#059669' }}>
-                  <span className={styles.statNum}>{presentCount}</span>
+                  <span className={styles.statNum}>{totalRecords}</span>
                   <span className={styles.statLabel}>Present</span>
-                </div>
-                <div className={styles.statBox} style={{ background: '#fef2f2', color: '#dc2626' }}>
-                  <span className={styles.statNum}>{absentCount}</span>
-                  <span className={styles.statLabel}>Absent</span>
                 </div>
               </div>
             </div>
@@ -224,15 +213,16 @@ const mapped = res.data.data.records.map(r => ({
                   <tr>
                     <th className={styles.th}>Employee</th>
                     <th className={styles.th}>Emp ID</th>
+                    <th className={styles.th}>Time</th>
                     <th className={styles.th}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <SkeletonRows cols={3} count={8} />
-                  ) : paginatedDailyRecords.length === 0 ? (
+                    <SkeletonRows cols={4} count={8} />
+                  ) : allRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={3}>
+                      <td colSpan={4}>
                         <div className={styles.emptyState}>
                           <span className={styles.emptyIcon}>📋</span>
                           <p className={styles.emptyText}>No records found</p>
@@ -241,7 +231,7 @@ const mapped = res.data.data.records.map(r => ({
                       </td>
                     </tr>
                   ) : (
-                    paginatedDailyRecords.map((r, i) => (
+                    allRecords.map((r, i) => (
                       <tr key={i} className={styles.row}>
                         <td className={styles.td}>
                           <div className={styles.nameCell}>
@@ -250,6 +240,7 @@ const mapped = res.data.data.records.map(r => ({
                           </div>
                         </td>
                         <td className={styles.td}><span className={styles.empId}>{r.empId}</span></td>
+                        <td className={styles.td}><span className={styles.dateText}>{r.time}</span></td>
                         <td className={styles.td}><span className={`${styles.badge} ${styles.present}`}>Present</span></td>
                       </tr>
                     ))
@@ -258,11 +249,11 @@ const mapped = res.data.data.records.map(r => ({
               </table>
             </div>
 
-            {!loading && totalDailyPages > 1 && (
+            {!loading && totalPages > 1 && (
               <div className={styles.pagination}>
-                <button className={styles.pageBtn} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Prev</button>
-                <span className={styles.pageInfo}>Page {currentPage} of {totalDailyPages}</span>
-                <button className={styles.pageBtn} onClick={() => setCurrentPage(p => Math.min(totalDailyPages, p + 1))} disabled={currentPage === totalDailyPages}>Next →</button>
+                <button className={styles.pageBtn} onClick={() => fetchAttendance(currentPage - 1)} disabled={currentPage === 1}>← Prev</button>
+                <span className={styles.pageInfo}>Page {currentPage} of {totalPages}</span>
+                <button className={styles.pageBtn} onClick={() => fetchAttendance(currentPage + 1)} disabled={currentPage === totalPages}>Next →</button>
               </div>
             )}
           </>
@@ -291,7 +282,7 @@ const mapped = res.data.data.records.map(r => ({
             {empError && (
               <div className={styles.errorBox}>
                 <span>⚠️ {empError}</span>
-                <button onClick={() => fetchEmployeeRecords(empViewInput.trim())} className={styles.retryBtn}>Retry</button>
+                <button onClick={() => fetchEmployeeRecords(empViewInput.trim(), 1)} className={styles.retryBtn}>Retry</button>
               </div>
             )}
 
@@ -305,7 +296,7 @@ const mapped = res.data.data.records.map(r => ({
                   <div className={styles.avatar}>{getInitials(selectedEmployeeName)}</div>
                   <div>
                     <p className={styles.empTagName}>{selectedEmployeeName}</p>
-                    <p className={styles.empTagId}>{selectedEmployee} · {empRecords.length} records</p>
+                    <p className={styles.empTagId}>{selectedEmployee} · {empTotalRecords} records</p>
                   </div>
                 </div>
 
@@ -321,7 +312,7 @@ const mapped = res.data.data.records.map(r => ({
                     <tbody>
                       {empLoading ? (
                         <SkeletonRows cols={3} count={6} />
-                      ) : paginatedEmpRecords.length === 0 ? (
+                      ) : empRecords.length === 0 ? (
                         <tr>
                           <td colSpan={3}>
                             <div className={styles.emptyState}>
@@ -332,7 +323,7 @@ const mapped = res.data.data.records.map(r => ({
                           </td>
                         </tr>
                       ) : (
-                        paginatedEmpRecords.map((r, i) => (
+                        empRecords.map((r, i) => (
                           <tr key={i} className={styles.row}>
                             <td className={styles.td}><span className={styles.dateText}>{formatDate(r.date)}</span></td>
                             <td className={styles.td}><span className={styles.dateText}>{r.time}</span></td>
@@ -344,11 +335,11 @@ const mapped = res.data.data.records.map(r => ({
                   </table>
                 </div>
 
-                {!empLoading && totalEmpPages > 1 && (
+                {!empLoading && empTotalPages > 1 && (
                   <div className={styles.pagination}>
-                    <button className={styles.pageBtn} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>← Prev</button>
-                    <span className={styles.pageInfo}>Page {currentPage} of {totalEmpPages}</span>
-                    <button className={styles.pageBtn} onClick={() => setCurrentPage(p => Math.min(totalEmpPages, p + 1))} disabled={currentPage === totalEmpPages}>Next →</button>
+                    <button className={styles.pageBtn} onClick={() => fetchEmployeeRecords(selectedEmployee, empPage - 1)} disabled={empPage === 1}>← Prev</button>
+                    <span className={styles.pageInfo}>Page {empPage} of {empTotalPages}</span>
+                    <button className={styles.pageBtn} onClick={() => fetchEmployeeRecords(selectedEmployee, empPage + 1)} disabled={empPage === empTotalPages}>Next →</button>
                   </div>
                 )}
               </>

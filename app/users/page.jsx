@@ -1,75 +1,90 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
-import { getUsers } from '@/lib/api';
+import { getUsers } from '@/app/utils/api';
 
 const ITEMS_PER_PAGE = 20;
 
 function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default function UsersPage() {
   const router = useRouter();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages]   = useState(1);
+  const [totalUsers, setTotalUsers]   = useState(0);
+  const [search, setSearch]           = useState('');
+  const debounceRef = useRef(null);
 
-  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
-  const paginatedUsers = users.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async (page = 1, searchTerm = '') => {
     try {
-      console.log("Fetch Users called");
       setLoading(true);
       setError(null);
-      const res = await getUsers();
-      console.log("response: ", res);
+      const res = await getUsers(page, ITEMS_PER_PAGE, searchTerm);
 
-      console.log("Response data: ", res.data.status);
-      if (!res.data?.status) {
-        alert(res.data.message || 'Failed to fetch users');
+      if (!res.success) {
+        setError(res.message || 'Failed to fetch users');
         return;
       }
-      if(!res.data.data.users||res  .data.data.users.length === 0) {
-        setUsers([]);
-        return;
-      }
-      
-      const mapped = res.data.data.users.map(u => ({
-        id: u.user_id,
-        name: u.name,
-        status: u.status,
-      }));
-      console.log(mapped);
-      setUsers(mapped);
+
+      const { users: rawUsers, total_pages: tp, total } = res.data;
+
+      setUsers(
+        (rawUsers || []).map((u) => ({
+          id: u.user_id,
+          name: u.name,
+          status: u.status,
+        }))
+      );
+      setTotalPages(tp || 1);
+      setTotalUsers(total || 0);
+      setCurrentPage(page);
     } catch (err) {
       setError('Failed to load users. Make sure the backend is running on port 5000.');
-      console.log("Error at page/users/fetchUsers: ", err);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchUsers(1, '');
+  }, [fetchUsers]);
+
+  // Debounced search — fires 400ms after user stops typing, backend only
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchUsers(1, val);
+    }, 400);
   };
 
   const handleDelete = (id) => {
     setDeletingId(id);
     setTimeout(() => {
-      setUsers(prev => {
-        const updated = prev.filter(u => u.id !== id);
-        const newTotalPages = Math.ceil(updated.length / ITEMS_PER_PAGE);
-        if (currentPage > newTotalPages) setCurrentPage(Math.max(1, newTotalPages));
-        return updated;
-      });
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setTotalUsers((n) => n - 1);
       setDeletingId(null);
     }, 300);
+  };
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    fetchUsers(page, search);
   };
 
   return (
@@ -93,24 +108,38 @@ export default function UsersPage() {
           <div>
             <h1 className={styles.heading}>Users</h1>
             <p className={styles.subheading}>
-              {loading ? 'Loading...' : `${users.length} active employees in the system`}
+              {loading ? 'Loading…' : `${totalUsers} active employees in the system`}
             </p>
           </div>
-          <button className={styles.refreshBtn} onClick={fetchUsers} title="Refresh">
+          <button className={styles.refreshBtn} onClick={() => fetchUsers(currentPage, search)} title="Refresh">
             🔄 Refresh
           </button>
+        </div>
+
+        {/* Search — backend filtered */}
+        <div className={styles.searchWrapper}>
+          <input
+            className={styles.searchInput}
+            type="search"
+            placeholder="Search by name or ID…"
+            value={search}
+            onChange={handleSearchChange}
+            aria-label="Search users"
+          />
         </div>
 
         {error && (
           <div className={styles.errorBox}>
             <span>⚠️ {error}</span>
-            <button onClick={fetchUsers} className={styles.retryBtn}>Retry</button>
+            <button onClick={() => fetchUsers(currentPage, search)} className={styles.retryBtn}>
+              Retry
+            </button>
           </div>
         )}
 
         {loading ? (
           <div className={styles.tableWrapper}>
-            {[...Array(5)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <div key={i} className={styles.skeletonRow} />
             ))}
           </div>
@@ -126,7 +155,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedUsers.map((user) => (
+                  {users.map((user) => (
                     <tr
                       key={user.id}
                       className={`${styles.row} ${deletingId === user.id ? styles.deleting : ''}`}
@@ -145,6 +174,7 @@ export default function UsersPage() {
                           className={styles.deleteBtn}
                           onClick={() => handleDelete(user.id)}
                           title="Delete user"
+                          aria-label={`Delete ${user.name}`}
                         >
                           🗑️
                         </button>
@@ -154,11 +184,13 @@ export default function UsersPage() {
                 </tbody>
               </table>
 
-              {users.length === 0 && !loading && (
+              {users.length === 0 && (
                 <div className={styles.empty}>
                   <span className={styles.emptyIcon}>👥</span>
                   <p className={styles.emptyText}>No users found</p>
-                  <p className={styles.emptySubtext}>Add a new user to get started</p>
+                  <p className={styles.emptySubtext}>
+                    {search ? `No results for "${search}"` : 'Add a new user to get started'}
+                  </p>
                 </div>
               )}
             </div>
@@ -167,15 +199,17 @@ export default function UsersPage() {
               <div className={styles.pagination}>
                 <button
                   className={styles.pageBtn}
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  ← Previous
+                  ← Prev
                 </button>
-                <span className={styles.pageInfo}>Page {currentPage} of {totalPages}</span>
+                <span className={styles.pageInfo}>
+                  Page {currentPage} of {totalPages}
+                </span>
                 <button
                   className={styles.pageBtn}
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
                   Next →
