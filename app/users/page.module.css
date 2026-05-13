@@ -147,7 +147,18 @@
 }
 .row:last-child { border-bottom: none; }
 .row:hover { background: #f8fafc; }
-.row.deleting { opacity: 0; transform: translateX(12px); transition: all 0.3s ease; }
+.row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+.row:last-child { border-bottom: none; }
+.row:hover { background: #f8fafc; }
+
+.deleting {
+  opacity: 0.45;
+  transform: translateX(8px);
+  pointer-events: none;
+}
 .td { padding: 14px 24px; vertical-align: middle; }
 .empId {
   font-size: 13px;
@@ -172,15 +183,33 @@
 }
 .name { font-size: 14px; font-weight: 600; color: #0f172a; }
 .deleteBtn {
-  padding: 6px 10px;
-  font-size: 15px;
+  min-width: 92px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
-  line-height: 1;
+  line-height: 1.2;
+  text-align: center;
 }
+
+.deleteBtn:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
 .deleteBtn:hover { background: #fef2f2; border-color: #fecaca; }
 
 /* Empty */
@@ -244,4 +273,12 @@
   .th, .td { padding: 12px 16px; }
   .pagination { gap: 10px; }
   .pageBtn { padding: 8px 14px; font-size: 12px; }
+}
+.tableWrapper {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.04);
 }
