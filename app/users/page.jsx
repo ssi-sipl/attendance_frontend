@@ -7,11 +7,9 @@ import { getUsers, deleteUser } from '@/app/utils/api';
 
 const ITEMS_PER_PAGE = 20;
 
-function getInitials(name = '') {
+function getInitials(name) {
   return name
-    .trim()
     .split(' ')
-    .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .toUpperCase()
@@ -20,21 +18,20 @@ function getInitials(name = '') {
 
 export default function UsersPage() {
   const router = useRouter();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [search, setSearch] = useState('');
+  const [totalPages, setTotalPages]   = useState(1);
+  const [totalUsers, setTotalUsers]   = useState(0);
+  const [search, setSearch]           = useState('');
   const debounceRef = useRef(null);
 
   const fetchUsers = useCallback(async (page = 1, searchTerm = '') => {
     try {
       setLoading(true);
       setError(null);
-
       const res = await getUsers(page, ITEMS_PER_PAGE, searchTerm);
 
       if (!res.success) {
@@ -42,7 +39,7 @@ export default function UsersPage() {
         return;
       }
 
-      const { users: rawUsers, total_pages: tp, total } = res.data || {};
+      const { users: rawUsers, total_pages: tp, total } = res.data;
 
       setUsers(
         (rawUsers || []).map((u) => ({
@@ -61,14 +58,12 @@ export default function UsersPage() {
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
     fetchUsers(1, '');
   }, [fetchUsers]);
 
-  useEffect(() => {
-    return () => clearTimeout(debounceRef.current);
-  }, []);
-
+  // Debounced search — fires 400ms after user stops typing, backend only
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearch(val);
@@ -78,39 +73,32 @@ export default function UsersPage() {
     }, 400);
   };
 
-  const handleDelete = async (id, name) => {
-    const confirmed = window.confirm(`Are you sure you want to delete ${name}?`);
-    if (!confirmed) return;
+  const handleDelete = async (id) => {
+  try {
+    setDeletingId(id);
 
-    try {
-      setDeletingId(id);
-      setError(null);
+    console.log('Deleting user:', id);
 
-      const res = await deleteUser(id);
+    const res = await deleteUser(id);
 
-      if (!res.success) {
-        setError(res.message || 'Failed to delete user');
-        setDeletingId(null);
-        return;
-      }
+    console.log('Delete response:', res);
 
-      const remainingUsers = users.filter((u) => u.id !== id);
-      const nextTotal = Math.max(0, totalUsers - 1);
-
-      setUsers(remainingUsers);
-      setTotalUsers(nextTotal);
-
-      if (remainingUsers.length === 0 && currentPage > 1) {
-        await fetchUsers(currentPage - 1, search);
-      } else {
-        await fetchUsers(currentPage, search);
-      }
-    } catch (err) {
-      setError('Failed to delete user. Make sure the backend is running.');
-    } finally {
-      setDeletingId(null);
+    if (!res.success) {
+      alert(res.message || 'Failed to delete user');
+      return;
     }
-  };
+
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+
+    setTotalUsers((n) => Math.max(0, n - 1));
+
+  } catch (err) {
+    console.error(err);
+    alert('Failed to delete user');
+  } finally {
+    setDeletingId(null);
+  }
+};
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPages) return;
@@ -141,15 +129,12 @@ export default function UsersPage() {
               {loading ? 'Loading…' : `${totalUsers} active employees in the system`}
             </p>
           </div>
-          <button
-            className={styles.refreshBtn}
-            onClick={() => fetchUsers(currentPage, search)}
-            title="Refresh"
-          >
+          <button className={styles.refreshBtn} onClick={() => fetchUsers(currentPage, search)} title="Refresh">
             🔄 Refresh
           </button>
         </div>
 
+        {/* Search — backend filtered */}
         <div className={styles.searchWrapper}>
           <input
             className={styles.searchInput}
@@ -205,12 +190,11 @@ export default function UsersPage() {
                       <td className={styles.td}>
                         <button
                           className={styles.deleteBtn}
-                          onClick={() => handleDelete(user.id, user.name)}
+                          onClick={() => handleDelete(user.id)}
                           title="Delete user"
                           aria-label={`Delete ${user.name}`}
-                          disabled={deletingId === user.id}
                         >
-                          {deletingId === user.id ? 'Deleting...' : '🗑️'}
+                          🗑️
                         </button>
                       </td>
                     </tr>
