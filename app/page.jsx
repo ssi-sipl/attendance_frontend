@@ -33,6 +33,7 @@ export default function LoginPage() {
     }
     if (username.trim() === 'user' && password.trim() === 'user123') {
 
+      localStorage.setItem('isLoggedIn', 'true');
       router.push('/dashboard');
     } else {
       setError('Incorrect username or password.');

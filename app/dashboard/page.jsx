@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 const tiles = [
@@ -33,6 +34,22 @@ const tiles = [
 export default function DashboardPage() {
   const router = useRouter();
 
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+    if (!isLoggedIn) {
+      router.push('/');
+    } else {
+      setAuthorized(true);
+    }
+  }, [router]);
+
+  if (!authorized) {
+    return null;
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.navbar}>
@@ -40,7 +57,14 @@ export default function DashboardPage() {
           <span className={styles.navLogo}>📋</span>
           <span className={styles.navTitle}>NCattendance</span>
         </div>
-        <button className={styles.logoutBtn} onClick={() => router.push('/')}>
+
+        <button
+          className={styles.logoutBtn}
+          onClick={() => {
+            localStorage.removeItem('isLoggedIn');
+            router.push('/');
+          }}
+        >
           Sign Out
         </button>
       </header>
@@ -48,7 +72,9 @@ export default function DashboardPage() {
       <main className={styles.main}>
         <div className={styles.pageHeader}>
           <h1 className={styles.heading}>Dashboard</h1>
-          <p className={styles.subheading}>Select a module to get started</p>
+          <p className={styles.subheading}>
+            Select a module to get started
+          </p>
         </div>
 
         <div className={styles.grid}>
@@ -57,13 +83,25 @@ export default function DashboardPage() {
               key={tile.id}
               className={styles.tile}
               onClick={() => router.push(`/${tile.id}`)}
-              style={{ '--tile-color': tile.color, '--tile-highlight': tile.highlight }}
+              style={{
+                '--tile-color': tile.color,
+                '--tile-highlight': tile.highlight,
+              }}
             >
-              <div className={styles.tileIcon}>{tile.icon}</div>
-              <div className={styles.tileBody}>
-                <h2 className={styles.tileTitle}>{tile.title}</h2>
-                <p className={styles.tileDesc}>{tile.description}</p>
+              <div className={styles.tileIcon}>
+                {tile.icon}
               </div>
+
+              <div className={styles.tileBody}>
+                <h2 className={styles.tileTitle}>
+                  {tile.title}
+                </h2>
+
+                <p className={styles.tileDesc}>
+                  {tile.description}
+                </p>
+              </div>
+
               <span className={styles.tileArrow}>→</span>
             </button>
           ))}
