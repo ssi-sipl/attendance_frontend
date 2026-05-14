@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { getAttendance } from '@/app/utils/api';
 import useSocket from '@/lib/useSocket';
+import AppNavbar from '@/app/components/Navbar.jsx';
+import PageHeader from '@/app/components/PageHeader.jsx';
+import EmptyState from '@/app/components/EmptyState.jsx';
+import Avatar from '@/app/components/Avatar.jsx';
+import ProtectedRoute from '@/app/components/ProtectedRoute.jsx';
+import Pagination from '@/app/components/Pagination.jsx';
 
 const today = new Date().toLocaleDateString('en-CA');
 const ITEMS_PER_PAGE = 20;
@@ -64,9 +70,9 @@ function SkeletonRows({ cols = 3, count = 8 }) {
 }
 
 export default function AttendancePage() {
-  const router = useRouter();
+  
 
-  const [authorized, setAuthorized] = useState(false);
+   
 
   const [activeTab, setActiveTab] = useState('daily');
 
@@ -119,16 +125,8 @@ export default function AttendancePage() {
   const [empError, setEmpError] =
     useState(null);
 
-  useEffect(() => {
-    const isLoggedIn =
-      localStorage.getItem('isLoggedIn');
-
-    if (!isLoggedIn) {
-      router.push('/');
-    } else {
-      setAuthorized(true);
-    }
-  }, [router]);
+  
+    
 
   const debouncedEmpId = useDebounce(
     empIdFilterInput,
@@ -187,11 +185,8 @@ export default function AttendancePage() {
   );
 
   useEffect(() => {
-    if (authorized) {
-      fetchAttendance(1);
-    }
-  }, [fetchAttendance, authorized]);
-
+  fetchAttendance(1);
+}, [fetchAttendance]);
   useSocket(() =>
     fetchAttendance(currentPage)
   );
@@ -277,70 +272,28 @@ export default function AttendancePage() {
     );
   };
 
-  if (!authorized) {
-    return null;
-  }
+  
 
   return (
-    <div className={styles.page}>
-      <header className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <button
-            className={styles.backBtn}
-            onClick={() =>
-              router.push('/dashboard')
-            }
-          >
-            ← Back
-          </button>
+  <ProtectedRoute>
+  <div className={styles.page}>
+    <AppNavbar
+      showRefresh
+      onRefresh={() => fetchAttendance(currentPage)}
+    />
 
-          <div className={styles.divider} />
+    <main className={styles.main}>
+      <PageHeader
+        title="Attendance"
+        subtitle={
+          loading
+            ? 'Loading...'
+            : `${totalRecords} present on ${formatDate(selectedDate)}`
+        }
+      />
+      
 
-          <span className={styles.navLogo}>
-            📋
-          </span>
-
-          <span className={styles.navTitle}>
-            NCattendance
-          </span>
-        </div>
-
-        <div className={styles.navRight}>
-          <button
-            className={styles.refreshBtn}
-            onClick={() => fetchAttendance(1)}
-            title="Refresh"
-          >
-            🔄
-          </button>
-
-          <button
-            className={styles.logoutBtn}
-            onClick={() => {
-              localStorage.removeItem(
-                'isLoggedIn'
-              );
-
-              router.push('/');
-            }}
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-
-      <main className={styles.main}>
-        <div>
-          <h1 className={styles.heading}>
-            Attendance
-          </h1>
-
-          <p className={styles.subheading}>
-            {loading
-              ? 'Loading records...'
-              : `${totalRecords} total records`}
-          </p>
-        </div>
+        
 
         {error && (
           <div className={styles.errorBox}>
@@ -489,37 +442,11 @@ export default function AttendancePage() {
                   ) : allRecords.length === 0 ? (
                     <tr>
                       <td colSpan={4}>
-                        <div
-                          className={
-                            styles.emptyState
-                          }
-                        >
-                          <span
-                            className={
-                              styles.emptyIcon
-                            }
-                          >
-                            📋
-                          </span>
-
-                          <p
-                            className={
-                              styles.emptyText
-                            }
-                          >
-                            No records found
-                          </p>
-
-                          <p
-                            className={
-                              styles.emptySubtext
-                            }
-                          >
-                            Try changing the
-                            date or Employee ID
-                            filter
-                          </p>
-                        </div>
+                        <EmptyState
+                          icon="📋"
+                          title="No records found"
+                          subtitle="Try changing the date or Employee ID filter"
+                        />
                       </td>
                     </tr>
                   ) : (
@@ -536,15 +463,7 @@ export default function AttendancePage() {
                               styles.nameCell
                             }
                           >
-                            <div
-                              className={
-                                styles.avatar
-                              }
-                            >
-                              {getInitials(
-                                r.name
-                              )}
-                            </div>
+                            <Avatar name={r.name} />
 
                             <span
                               className={
@@ -555,6 +474,11 @@ export default function AttendancePage() {
                             </span>
                           </div>
                         </td>
+
+                        
+
+                  
+                              
 
                         <td
                           className={styles.td}
@@ -598,45 +522,16 @@ export default function AttendancePage() {
 
             {!loading &&
               totalPages > 1 && (
-                <div
-                  className={styles.pagination}
-                >
-                  <button
-                    className={styles.pageBtn}
-                    onClick={() =>
-                      fetchAttendance(
-                        currentPage - 1
-                      )
-                    }
-                    disabled={
-                      currentPage === 1
-                    }
-                  >
-                    ← Prev
-                  </button>
-
-                  <span
-                    className={styles.pageInfo}
-                  >
-                    Page {currentPage} of{' '}
-                    {totalPages}
-                  </span>
-
-                  <button
-                    className={styles.pageBtn}
-                    onClick={() =>
-                      fetchAttendance(
-                        currentPage + 1
-                      )
-                    }
-                    disabled={
-                      currentPage ===
-                      totalPages
-                    }
-                  >
-                    Next →
-                  </button>
-                </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPrev={() =>
+                    fetchAttendance(currentPage - 1)
+                  }
+                    onNext={() =>
+                      fetchAttendance(currentPage + 1)
+                }
+/>
               )}
           </>
         )}
@@ -716,13 +611,9 @@ export default function AttendancePage() {
                       styles.employeeTag
                     }
                   >
-                    <div
-                      className={styles.avatar}
-                    >
-                      {getInitials(
-                        selectedEmployeeName
-                      )}
-                    </div>
+                    <Avatar
+                      name={selectedEmployeeName}
+                    />
 
                     <div>
                       <p
@@ -791,37 +682,13 @@ export default function AttendancePage() {
                           0 ? (
                           <tr>
                             <td colSpan={3}>
-                              <div
-                                className={
-                                  styles.emptyState
-                                }
-                              >
-                                <span
-                                  className={
-                                    styles.emptyIcon
-                                  }
-                                >
-                                  📋
-                                </span>
-
-                                <p
-                                  className={
-                                    styles.emptyText
-                                  }
-                                >
-                                  No records found
-                                </p>
-
-                                <p
-                                  className={
-                                    styles.emptySubtext
-                                  }
-                                >
-                                  This employee
-                                  has no attendance
-                                  history
-                                </p>
-                              </div>
+                              <EmptyState
+                                  icon="📋"
+                                   title="No records found"
+                                    subtitle="This employee has no attendance history"
+                                  />
+                                
+                                  
                             </td>
                           </tr>
                         ) : (
@@ -884,93 +751,42 @@ export default function AttendancePage() {
 
                   {!empLoading &&
                     empTotalPages > 1 && (
-                      <div
-                        className={
-                          styles.pagination
-                        }
-                      >
-                        <button
-                          className={
-                            styles.pageBtn
-                          }
-                          onClick={() =>
+                      
+                        <Pagination
+                          currentPage={empPage}
+                          totalPages={empTotalPages}
+                            onPrev={() =>
                             fetchEmployeeRecords(
                               selectedEmployee,
-                              empPage - 1
-                            )
+                            empPage - 1
+                           )
                           }
-                          disabled={
-                            empPage === 1
-                          }
-                        >
-                          ← Prev
-                        </button>
-
-                        <span
-                          className={
-                            styles.pageInfo
-                          }
-                        >
-                          Page {empPage} of{' '}
-                          {empTotalPages}
-                        </span>
-
-                        <button
-                          className={
-                            styles.pageBtn
-                          }
-                          onClick={() =>
-                            fetchEmployeeRecords(
-                              selectedEmployee,
-                              empPage + 1
-                            )
-                          }
-                          disabled={
-                            empPage ===
-                            empTotalPages
-                          }
-                        >
-                          Next →
-                        </button>
-                      </div>
+                          onNext={() =>
+                        fetchEmployeeRecords(
+                        selectedEmployee,
+                          empPage + 1
+                  )
+  }
+/>
+                        
                     )}
                 </>
               )}
 
             {!selectedEmployee &&
               !empError && (
-                <div
-                  className={styles.tableWrapper}
-                >
-                  <div
-                    className={styles.emptyState}
-                  >
-                    <span
-                      className={styles.emptyIcon}
-                    >
-                      🔍
-                    </span>
-
-                    <p
-                      className={styles.emptyText}
-                    >
-                      Search for an employee
-                    </p>
-
-                    <p
-                      className={
-                        styles.emptySubtext
-                      }
-                    >
-                      Enter an Employee ID
-                      above and press Search
-                    </p>
-                  </div>
-                </div>
+                <div className={styles.tableWrapper}>
+                  <EmptyState
+                  icon="🔍"
+                title="Search for an employee"
+                subtitle="Enter an Employee ID above and press Search"
+                />
+    </div>
               )}
           </>
         )}
       </main>
-    </div>
+        </div>
+  </ProtectedRoute>
   );
 }

@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { getUsers, deleteUser } from '@/app/utils/api';
+import AppNavbar from '@/app/components/Navbar.jsx';
+import PageHeader from '@/app/components/PageHeader.jsx';
+import Pagination from '@/app/components/Pagination.jsx';
+import Avatar from '@/app/components/Avatar.jsx';
+import ProtectedRoute from '@/app/components/ProtectedRoute.jsx';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -17,9 +21,9 @@ function getInitials(name) {
 }
 
 export default function UsersPage() {
-  const router = useRouter();
+  
 
-  const [authorized, setAuthorized] = useState(false);
+  
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,15 +36,7 @@ export default function UsersPage() {
 
   const debounceRef = useRef(null);
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-
-    if (!isLoggedIn) {
-      router.push('/');
-    } else {
-      setAuthorized(true);
-    }
-  }, [router]);
+  
 
   const fetchUsers = useCallback(async (page = 1, searchTerm = '') => {
     try {
@@ -86,10 +82,10 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => {
-    if (authorized) {
+    {
       fetchUsers(1, '');
     }
-  }, [fetchUsers, authorized]);
+  }, [fetchUsers]);
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
@@ -140,62 +136,26 @@ export default function UsersPage() {
     fetchUsers(page, search);
   };
 
-  if (!authorized) {
-    return null;
-  }
+    
+
 
   return (
+    <ProtectedRoute>
     <div className={styles.page}>
-      <header className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <button
-            className={styles.backBtn}
-            onClick={() => router.push('/dashboard')}
-          >
-            ← Back
-          </button>
-
-          <div className={styles.divider} />
-
-          <span className={styles.navLogo}>📋</span>
-
-          <span className={styles.navTitle}>
-            NCattendance
-          </span>
-        </div>
-
-        <button
-          className={styles.logoutBtn}
-          onClick={() => {
-            localStorage.removeItem('isLoggedIn');
-            router.push('/');
-          }}
-        >
-          Sign Out
-        </button>
-      </header>
+      <AppNavbar showRefresh={true} onRefresh={() => fetchUsers(currentPage, search)} />
 
       <main className={styles.main}>
         <div className={styles.pageHeader}>
-          <div>
-            <h1 className={styles.heading}>Users</h1>
+          <PageHeader
+              title="Users"
+              subtitle={
+              loading
+                ? 'Loading...'
+                : ` ${totalUsers} active employees in the system`
+  }
+/>
 
-            <p className={styles.subheading}>
-              {loading
-                ? 'Loading…'
-                : `${totalUsers} active employees in the system`}
-            </p>
-          </div>
-
-          <button
-            className={styles.refreshBtn}
-            onClick={() =>
-              fetchUsers(currentPage, search)
-            }
-            title="Refresh"
-          >
-            🔄 Refresh
-          </button>
+          
         </div>
 
         <div className={styles.searchWrapper}>
@@ -269,9 +229,7 @@ export default function UsersPage() {
 
                       <td className={styles.td}>
                         <div className={styles.nameCell}>
-                          <div className={styles.avatar}>
-                            {getInitials(user.name)}
-                          </div>
+                          <Avatar name={user.name} />
 
                           <span className={styles.name}>
                             {user.name}
@@ -314,37 +272,25 @@ export default function UsersPage() {
                 </div>
               )}
             </div>
-
             {totalPages > 1 && (
-              <div className={styles.pagination}>
-                <button
-                  className={styles.pageBtn}
-                  onClick={() =>
-                    goToPage(currentPage - 1)
-                  }
-                  disabled={currentPage === 1}
-                >
-                  ← Prev
-                </button>
+  <Pagination
+    currentPage={currentPage}
+    totalPages={totalPages}
+    onPrev={() =>
+      fetchUsers(currentPage - 1, search)
+    }
+    onNext={() =>
+      fetchUsers(currentPage + 1, search)
+    }
+  />
+)}
 
-                <span className={styles.pageInfo}>
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <button
-                  className={styles.pageBtn}
-                  onClick={() =>
-                    goToPage(currentPage + 1)
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  Next →
-                </button>
-              </div>
-            )}
+    
           </>
+                 
         )}
       </main>
     </div>
+    </ProtectedRoute>
   );
 }

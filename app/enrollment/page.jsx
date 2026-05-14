@@ -3,26 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import AppNavbar from '@/app/components/Navbar.jsx';
+import PageHeader from '@/app/components/PageHeader.jsx';
+import ProtectedRoute from '@/app/components/ProtectedRoute.jsx';
 
 export default function EnrollmentPage() {
   const router = useRouter();
 
-  const [authorized, setAuthorized] = useState(false);
+ 
 
   const [name, setName] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState('idle');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-
-    if (!isLoggedIn) {
-      router.push('/');
-    } else {
-      setAuthorized(true);
-    }
-  }, [router]);
+ 
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -98,51 +93,19 @@ export default function EnrollmentPage() {
     setScanStatus('idle');
   };
 
-  if (!authorized) {
-    return null;
-  }
+  
 
   return (
+    <ProtectedRoute>
     <div className={styles.page}>
-      <header className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <button
-            className={styles.backBtn}
-            onClick={() => router.push('/dashboard')}
-          >
-            ← Back
-          </button>
-
-          <div className={styles.divider} />
-
-          <span className={styles.navLogo}>📋</span>
-
-          <span className={styles.navTitle}>
-            NCattendance
-          </span>
-        </div>
-
-        <button
-          className={styles.logoutBtn}
-          onClick={() => {
-            localStorage.removeItem('isLoggedIn');
-            router.push('/');
-          }}
-        >
-          Sign Out
-        </button>
-      </header>
+      <AppNavbar/>
 
       <main className={styles.main}>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.heading}>
-            Enrollment
-          </h1>
-
-          <p className={styles.subheading}>
-            Register a new employee with fingerprint
-          </p>
-        </div>
+        
+          <PageHeader
+              title="Enrollment"
+              subtitle="Register a new employee with fingerprint"
+          />
 
         <div className={styles.card}>
           <form
@@ -304,5 +267,6 @@ export default function EnrollmentPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

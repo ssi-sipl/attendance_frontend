@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+
 import styles from './page.module.css';
+import ProtectedRoute  from '@/app/components/ProtectedRoute.jsx';
 
 const tiles = [
   {
@@ -34,24 +35,12 @@ const tiles = [
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [authorized, setAuthorized] = useState(false);
-
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-
-    if (!isLoggedIn) {
-      router.push('/');
-    } else {
-      setAuthorized(true);
-    }
-  }, [router]);
-
-  if (!authorized) {
-    return null;
-  }
+  
 
   return (
+      <ProtectedRoute>
     <div className={styles.page}>
+
       <header className={styles.navbar}>
         <div className={styles.navLeft}>
           <span className={styles.navLogo}>📋</span>
@@ -107,6 +96,7 @@ export default function DashboardPage() {
           ))}
         </div>
       </main>
-    </div>
+        </div>
+  </ProtectedRoute>
   );
 }
