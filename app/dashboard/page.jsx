@@ -30,6 +30,14 @@ const tiles = [
     color: '#059669',
     highlight: '#ecfdf5',
   },
+  {
+  id: 'chatbot',
+  icon:'🤖',
+  title:'Chatbot',
+  description:'Get answers to your attendance related queries using our inhouse built chatbot',
+  color:'#b91c1c',
+  highlight:'#fef2f2',
+},
 ];
 
 export default function DashboardPage() {
