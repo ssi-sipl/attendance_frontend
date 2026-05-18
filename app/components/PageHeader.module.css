@@ -1,0 +1,19 @@
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heading {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.subheading {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}

@@ -1,14 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+
 import styles from './page.module.css';
+import ProtectedRoute  from '@/app/components/ProtectedRoute.jsx';
 
 const tiles = [
   {
     id: 'attendance',
     icon: '✅',
     title: 'Attendance',
-    description: 'Mark and track daily student attendance records',
+    description: 'Track daily Employee attendance',
     color: '#4f46e5',
     highlight: '#eef2ff',
   },
@@ -16,7 +18,7 @@ const tiles = [
     id: 'users',
     icon: '👤',
     title: 'Users',
-    description: 'Manage teachers, admins and system user accounts',
+    description: 'Manage Employees',
     color: '#0891b2',
     highlight: '#ecfeff',
   },
@@ -24,7 +26,7 @@ const tiles = [
     id: 'enrollment',
     icon: '📋',
     title: 'Enrollment',
-    description: 'Enroll students into classes and manage rosters',
+    description: 'Register new Employees into the system',
     color: '#059669',
     highlight: '#ecfdf5',
   },
@@ -33,14 +35,25 @@ const tiles = [
 export default function DashboardPage() {
   const router = useRouter();
 
+  
+
   return (
+      <ProtectedRoute>
     <div className={styles.page}>
+
       <header className={styles.navbar}>
         <div className={styles.navLeft}>
           <span className={styles.navLogo}>📋</span>
-          <span className={styles.navTitle}>AttendEase</span>
+          <span className={styles.navTitle}>NCattendance</span>
         </div>
-        <button className={styles.logoutBtn} onClick={() => router.push('/login')}>
+
+        <button
+          className={styles.logoutBtn}
+          onClick={() => {
+            localStorage.removeItem('isLoggedIn');
+            router.push('/');
+          }}
+        >
           Sign Out
         </button>
       </header>
@@ -48,7 +61,9 @@ export default function DashboardPage() {
       <main className={styles.main}>
         <div className={styles.pageHeader}>
           <h1 className={styles.heading}>Dashboard</h1>
-          <p className={styles.subheading}>Select a module to get started</p>
+          <p className={styles.subheading}>
+            Select a module to get started
+          </p>
         </div>
 
         <div className={styles.grid}>
@@ -57,18 +72,31 @@ export default function DashboardPage() {
               key={tile.id}
               className={styles.tile}
               onClick={() => router.push(`/${tile.id}`)}
-              style={{ '--tile-color': tile.color, '--tile-highlight': tile.highlight }}
+              style={{
+                '--tile-color': tile.color,
+                '--tile-highlight': tile.highlight,
+              }}
             >
-              <div className={styles.tileIcon}>{tile.icon}</div>
-              <div className={styles.tileBody}>
-                <h2 className={styles.tileTitle}>{tile.title}</h2>
-                <p className={styles.tileDesc}>{tile.description}</p>
+              <div className={styles.tileIcon}>
+                {tile.icon}
               </div>
+
+              <div className={styles.tileBody}>
+                <h2 className={styles.tileTitle}>
+                  {tile.title}
+                </h2>
+
+                <p className={styles.tileDesc}>
+                  {tile.description}
+                </p>
+              </div>
+
               <span className={styles.tileArrow}>→</span>
             </button>
           ))}
         </div>
       </main>
-    </div>
+        </div>
+  </ProtectedRoute>
   );
 }
