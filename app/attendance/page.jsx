@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { getAttendance } from '@/app/utils/api';
 import useSocket from '@/lib/useSocket';
@@ -165,7 +164,9 @@ export default function AttendancePage() {
             empId: r.user_id,
             name: r.name,
             date: r.date,
-            time: r.time,
+            entry_time: r.entry_time,
+            exit_time: r.exit_time,
+            status: r.status,
           }))
         );
 
@@ -232,7 +233,9 @@ export default function AttendancePage() {
             empId: r.user_id,
             name: r.name,
             date: r.date,
-            time: r.time,
+            entry_time: r.entry_time,
+            exit_time: r.exit_time,
+            status: r.status,
           })
         );
 
@@ -424,8 +427,12 @@ export default function AttendancePage() {
                     </th>
 
                     <th className={styles.th}>
-                      Time
+                      ENTRY
                     </th>
+                    <th className={styles.th}>
+                      EXIT
+                    </th>
+                  
 
                     <th className={styles.th}>
                       Status
@@ -436,12 +443,12 @@ export default function AttendancePage() {
                 <tbody>
                   {loading ? (
                     <SkeletonRows
-                      cols={4}
+                      cols={5}
                       count={8}
                     />
                   ) : allRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={4}>
+                      <td colSpan={5}>
                         <EmptyState
                           icon="📋"
                           title="No records found"
@@ -480,39 +487,38 @@ export default function AttendancePage() {
                   
                               
 
-                        <td
-                          className={styles.td}
-                        >
-                          <span
-                            className={
-                              styles.empId
-                            }
-                          >
-                            {r.empId}
-                          </span>
-                        </td>
+             <td className={styles.td}>
+  <span className={styles.empId}>
+    {r.empId || '-'}
+  </span>
+</td>
 
-                        <td
-                          className={styles.td}
-                        >
-                          <span
-                            className={
-                              styles.dateText
-                            }
-                          >
-                            {r.time}
-                          </span>
-                        </td>
+<td className={styles.td}>
+  <span className={styles.dateText}>
+    {r.entry_time || '-'}
+  </span>
+</td>
 
-                        <td
-                          className={styles.td}
-                        >
-                          <span
-                            className={`${styles.badge} ${styles.present}`}
-                          >
-                            Present
-                          </span>
-                        </td>
+<td className={styles.td}>
+  <span className={styles.dateText}>
+    {r.exit_time || '-'}
+  </span>
+</td>
+
+<td className={styles.td}>
+  <span
+    className={`${styles.badge} ${
+      r.status === 'Absent'
+        ? styles.absent
+        : r.status === 'OUT'
+        ? styles.out
+        : styles.present
+    }`}
+  >
+    {r.status || '-'}
+  </span>
+</td>
+                        
                       </tr>
                     ))
                   )}
@@ -659,7 +665,14 @@ export default function AttendancePage() {
                               styles.th
                             }
                           >
-                            Time
+                            ENTRY
+                          </th>
+                          <th
+                            className={
+                              styles.th
+                            }
+                          >
+                            EXIT
                           </th>
 
                           <th
@@ -675,13 +688,13 @@ export default function AttendancePage() {
                       <tbody>
                         {empLoading ? (
                           <SkeletonRows
-                            cols={3}
+                            cols={4}
                             count={6}
                           />
                         ) : empRecords.length ===
                           0 ? (
                           <tr>
-                            <td colSpan={3}>
+                            <td colSpan={4}>
                               <EmptyState
                                   icon="📋"
                                    title="No records found"
@@ -716,31 +729,52 @@ export default function AttendancePage() {
                                   </span>
                                 </td>
 
-                                <td
-                                  className={
-                                    styles.td
-                                  }
-                                >
-                                  <span
-                                    className={
-                                      styles.dateText
-                                    }
-                                  >
-                                    {r.time}
-                                  </span>
-                                </td>
+                               <td
+  className={
+    styles.td
+  }
+>
+  <span
+    className={
+      styles.dateText
+    }
+  >
+    {r.entry_time || '-'}
+  </span>
+</td>
 
-                                <td
-                                  className={
-                                    styles.td
-                                  }
-                                >
-                                  <span
-                                    className={`${styles.badge} ${styles.present}`}
-                                  >
-                                    Present
-                                  </span>
-                                </td>
+<td
+  className={
+    styles.td
+  }
+>
+  <span
+    className={
+      styles.dateText
+    }
+  >
+    {r.exit_time || '-'}
+  </span>
+</td>
+<td
+  className={
+    styles.td
+  }
+>
+  <span
+    className={`${styles.badge} ${
+      r.status === 'Absent'
+        ? styles.absent
+        : r.status === 'OUT'
+        ? styles.out
+        : styles.present
+    }`}
+  >
+    {r.status || '-'}
+  </span>
+</td>
+                                
+                                  
                               </tr>
                             )
                           )
