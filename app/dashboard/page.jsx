@@ -52,7 +52,7 @@ export default function DashboardPage() {
       <header className={styles.navbar}>
         <div className={styles.navLeft}>
           <span className={styles.navLogo}>📋</span>
-          <span className={styles.navTitle}>NCattendance</span>
+          <span className={styles.navTitle}>NC Attendance</span>
         </div>
 
         <button

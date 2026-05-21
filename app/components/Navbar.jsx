@@ -6,6 +6,7 @@ import styles from './Navbar.module.css';
 export default function AppNavbar({
   showRefresh = false,
   onRefresh = null,
+    title = null,
 }) {
   const router = useRouter();
 
@@ -26,7 +27,7 @@ export default function AppNavbar({
         </span>
 
         <span className={styles.navTitle}>
-          NCattendance
+            {title || 'NC Attendance'}
         </span>
       </div>
 

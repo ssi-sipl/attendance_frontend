@@ -100,7 +100,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className={styles.footer}>NCattendance · Attendance Management System</p>
+        <p className={styles.footer}>NC Attendance · Attendance Management System</p>
       </div>
     </div>
   );

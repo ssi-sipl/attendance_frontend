@@ -91,7 +91,8 @@ export default function AttendancePage() {
 
   const [totalRecords, setTotalRecords] =
     useState(0);
-
+  const [presentCount, setPresentCount] = useState(0);
+const [absentCount, setAbsentCount]   = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState(null);
@@ -169,6 +170,10 @@ export default function AttendancePage() {
             status: r.status,
           }))
         );
+        const present = (records || []).filter((r) => r.status === 'IN' || r.status === 'OUT').length;
+const absent  = (records || []).filter((r) => r.status === 'Absent').length;
+setPresentCount(present);
+setAbsentCount(absent);
 
         setTotalPages(total_pages || 1);
         setTotalRecords(total || 0);
@@ -291,7 +296,7 @@ export default function AttendancePage() {
         subtitle={
           loading
             ? 'Loading...'
-            : `${totalRecords} present on ${formatDate(selectedDate)}`
+            : `${presentCount} present on ${formatDate(selectedDate)}`
         }
       />
       
@@ -392,18 +397,22 @@ export default function AttendancePage() {
               </div>
 
               <div className={styles.statsRow}>
-                <div
-                  className={styles.statBox}
-                  style={{
-                    background: '#ecfdf5',
-                    color: '#059669',
-                  }}
-                >
-                  <span
-                    className={styles.statNum}
-                  >
-                    {totalRecords}
-                  </span>
+  <div className={styles.statBox} style={{ background: '#ecfdf5', color: '#059669' }}>
+    <span className={styles.statNum}>{presentCount}</span>
+    <span className={styles.statLabel}>Present</span>
+  </div>
+  <div className={styles.statBox} style={{ background: '#fef2f2', color: '#dc2626' }}>
+    <span className={styles.statNum}>{absentCount}</span>
+    <span className={styles.statLabel}>Absent</span>
+  </div>
+  <div className={styles.statBox} style={{ background: '#eff6ff', color: '#6366f1' }}>
+    <span className={styles.statNum}>{totalRecords}</span>
+    <span className={styles.statLabel}>Total</span>
+  </div>
+</div>
+                
+                
+                 
 
                   <span
                     className={styles.statLabel}
@@ -411,8 +420,8 @@ export default function AttendancePage() {
                     Present
                   </span>
                 </div>
-              </div>
-            </div>
+              
+            
 
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
