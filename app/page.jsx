@@ -46,7 +46,7 @@ export default function LoginPage() {
         <div className={styles.topBar}>
           <div className={styles.logoRow}>
             <span className={styles.logoIcon}>📋</span>
-            <span className={styles.logoText}>NCattendance</span>
+            <span className={styles.logoText}>NC Attendance</span>
           </div>
           <div className={styles.clock}>
             <span className={styles.clockTime}>{time}</span>

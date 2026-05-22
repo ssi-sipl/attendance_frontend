@@ -69,6 +69,7 @@
 .messageText { margin: 0; }
 
 /* ── floating input box ───────────────────── */
+/* ── floating input box ───────────────────── */
 
 .inputBox {
   position: absolute;
@@ -83,13 +84,13 @@
   box-shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
   backdrop-filter: blur(6px);
   display: flex;
-  flex-direction: column;
-  
-  gap: 6px;
+  flex-direction: row;       /* ← single row now */
+  align-items: flex-end;     /* ← aligns to bottom as textarea grows */
+  gap: 10px;
 }
 
 .input {
-  width: 100%;
+  flex: 1;                   /* ← takes all remaining space */
   resize: none;
   border: none;
   outline: none;
@@ -106,73 +107,121 @@
 
 .input::placeholder { color: #94a3b8; }
 
-/* ── bottom row ───────────────────────────── */
+/* ── bottom row — no longer needed as a separate row ── */
+/* Remove .bottomRow, .suggestionsWrapper stays but is now inline */
 
 .bottomRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: contents; /* collapses the wrapper, children flow into inputBox flex row */
 }
 
 /* ── suggestions dropdown ─────────────────── */
 
-.suggestionsWrapper {
-  position: relative;
-}
 
 .suggestionsBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  font-size: 13px;
-  color: #475569;
-  background: transparent;
-  border: 0.5px solid rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.07);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 20px;           /* ← pill shape */
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.suggestionsBtn:hover { background: #f1f5f9; }
+.suggestionsBtn:hover {
+  background: rgba(79, 70, 229, 0.13);
+  border-color: rgba(79, 70, 229, 0.4);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
 
 .suggestionsBtn svg {
   transition: transform 0.2s;
+  color: #4f46e5;
+}
+
+.suggestionsBtnOpen {
+  background: rgba(79, 70, 229, 0.13);
+  border-color: rgba(79, 70, 229, 0.35);
 }
 
 .suggestionsBtnOpen svg {
   transform: rotate(180deg);
 }
+/* ── suggestions dropdown ─────────────────── */
 
 .dropdown {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  background: #ffffff;
-  border: 0.5px solid rgba(0, 0, 0, 0.15);
-  border-radius: 12px;
-  padding: 4px;
-  min-width: 220px;
+  bottom: calc(100% + 10px);
+    
+  left:80%;                 /* ← anchors to left edge of the button */
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  transform: translateX(-50%);
+  border-radius: 16px;
+  padding: 6px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   z-index: 10;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 -4px 24px rgba(79, 70, 229, 0.08),
+    0 8px 32px rgba(2, 6, 23, 0.1);
+  backdrop-filter: blur(8px);
+  animation: dropUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .dropdownItem {
-  padding: 8px 12px;
+  padding: 9px 14px;
   font-size: 13.5px;
-  color: #0f172a;
+  font-weight: 450;
+  color: #1e293b;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.12s, color 0.12s, padding-left 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.dropdownItem:hover { background: #f1f5f9; }
+.dropdownItem::before {
+  content: "→";
+  font-size: 12px;
+  color: #a5b4fc;
+  flex-shrink: 0;
+  transition: color 0.12s, transform 0.15s;
+}
+
+.dropdownItem:hover {
+  background: rgba(79, 70, 229, 0.07);
+  color: #4f46e5;
+  padding-left: 18px;
+}
+
+.dropdownItem:hover::before {
+  color: #4f46e5;
+  transform: translateX(3px);
+}
 
 /* ── send button ──────────────────────────── */
 
@@ -251,6 +300,19 @@
   color: #475569;
 }
 
+/* ── hide scrollbars globally (keep scroll functional) ── */
+
+.messages::-webkit-scrollbar,
+.input::-webkit-scrollbar {
+  display: none;
+}
+
+.messages,
+.input {
+  -ms-overflow-style: none;   /* IE / Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+
 /* ── responsive ───────────────────────────── */
 
 @media (max-width: 768px) {
@@ -262,5 +324,6 @@
   .inputBox {
     width: calc(100% - 32px);
     bottom: 16px;
+
   }
 }
